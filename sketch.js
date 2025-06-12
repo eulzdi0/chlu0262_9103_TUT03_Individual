@@ -1,645 +1,296 @@
-let circles = [
-  [54, 48], [172, 25], [292, 3], [28, 160], [140, 136], [254, 110], [378, 80],
-  [-8, 268], [108, 248], [224, 220], [340, 192], [64, 356], [184, 340], [304, 308],
-  [420, 284], [260, 428], [380, 400]
-];
+// sketch.js — Chen’s sketch with clipping to square region
 
-//The radius of all circles is set to 54
-const RADIUS = 54;
+// Normalized positions based on a 400×400 reference
+const positions = {
+  sun1: { x: 254/400, y: 110/400 }, sun2: { x: 54/400, y: 48/400 },
+  egg1:{ x: 140/400, y:136/400 }, egg2:{ x:-8/400, y:268/400 },
+  green1:{x:108/400, y:248/400}, green2:{x:292/400, y:3/400},
+  blue1:{ x:28/400, y:160/400 }, blue2:{ x:172/400, y:25/400 },
+  conc1:{ x:340/400, y:192/400 }, conc2:{ x:184/400, y:340/400 },
+  flow1:{ x:64/400,  y:356/400 }, flow2:{ x:304/400, y:308/400 },
+  sect1:{ x:224/400, y:220/400 }, sect2:{ x:420/400, y:284/400 },
+  black1:{x:378/400, y:80/400}, black2:{x:260/400, y:428/400}, red:{x:380/400,y:400/400}
+};
+const RADIUS_RATIO = 54 / 400;
+let side, offsetX, offsetY, dr;
 
 function setup() {
-  createCanvas(400, 400);
-
-  //First draw the symmetrical corner background: the upper left half is white, the lower right half is black
-  noStroke();
-  //The "upper left half" is represented by the triangle (0,0), (400,0), (0,400) x+y <= 400
-  fill(255);
-  triangle(0, 0, 400, 0, 0, 400);
-  //The "lower right half" is represented by the triangle (400,400), (400,0), (0,400) x+y >= 400
-  fill(0);
-  triangle(400, 400, 400, 0, 0, 400);
-
-  //white circles
-  noStroke();
-  fill(255);
-  for (let i = 0; i < circles.length; i++) {
-    const [x, y] = circles[i];
-    ellipse(x, y, RADIUS * 2, RADIUS * 2);
-  }
+  createCanvas(windowWidth, windowHeight);
   noLoop();
+  calculateCanvas();
 }
 
 function draw() {
-  drawSunMoon(254, 110);
-  drawSunMoon(54, 48);
+  background(255);
 
-  drawEgg(140, 136);
-  drawEgg(-8, 268);
+  // Clip drawing to the centered square region
+  drawingContext.save();
+  drawingContext.beginPath();
+  drawingContext.rect(offsetX, offsetY, side, side);
+  drawingContext.clip();
 
-  drawGreenCircle(108, 248);
-  drawGreenCircle(292, 3);
-
-  drawBlueCircle(28, 160);
-  drawBlueCircle(172, 25);
-
-  drawConcentricCircles(340,192);
-  drawConcentricCircles(184,340);
-
-  drawFlawerCircles(64,356);
-  drawFlawerCircles(304,308);
-
-  drawSectorCircles(224,220);
-  drawSectorCircles(420,284);
-
-  drawBlackCircles(378,80);
-  drawBlackCircles(260,428);
-
-  drawRedCircle(380,400)
-}
-
-
-//Drawing on drawSunMoon(252, 108) and drawSunMoon(54,52)
-function drawSunMoon(cx, cy) {
-  const orange = color(241, 168, 128);
-  const DarkOrange = color(236, 120, 46);
-  const white = color(255);
-
-  //Draw a circle
-  strokeWeight(5);
-  stroke(orange);
-  noFill();
-  ellipse(cx, cy, RADIUS * 2, RADIUS * 2);
-
-  //Draw the "left semicircle" and fill it with orange
-  noStroke();
-  fill(orange);
-  arc(cx, cy, RADIUS * 2, RADIUS * 2, PI / 2, 3 * PI / 2);
-
-  //Draw a small white circle in the center——diameter 40
-  fill(white);
-  ellipse(cx, cy, 40, 40);
-
-  //Draw another orange semicircle (radius 20) on the right half of the small white circle in the center.
-  fill(DarkOrange);
-  arc(cx, cy, 40, 40, -PI / 2, PI / 2);
-  //Draw a small five-pointed star inside the orange semicircle in the previous step
-  //Place the center of the star in the center area of ​​the right half of the small circle, here select (cx + 7, cy)
-  drawStar(cx + 7, cy, 6, 4);
-
-  //Draw radial lines around the circle
-  //12 lines on the left side, white; 12 lines on the right side, orange; strokeWeight = 3
-  const totalPerSide = 10;
-  const step = PI / totalPerSide; //The angle between each line
-
-  //The right half (from -PI/2 to +PI/2) is in orange
-  strokeWeight(3);
-  stroke(DarkOrange);
-  for (let i = 0; i < totalPerSide; i++) {
-    const angle = -PI / 2 + i * step;
-    //Line from slightly inside radius RADIUS*1.05 to outside radius RADIUS*1.3
-    const r1 = RADIUS * 0.9;
-    const r2 = RADIUS * 0.6;
-    const x1 = cx + cos(angle) * r1;
-    const y1 = cy + sin(angle) * r1;
-    const x2 = cx + cos(angle) * r2;
-    const y2 = cy + sin(angle) * r2;
-    line(x1, y1, x2, y2);
-  }
-  //The left half (from PI/2 to 3*PI/2) is white
-  stroke(white);
-  for (let i = 0; i < totalPerSide; i++) {
-    const angle = PI / 2 + i * step;
-    const r1 = RADIUS * 0.9;
-    const r2 = RADIUS * 0.6;
-    const x1 = cx + cos(angle) * r1;
-    const y1 = cy + sin(angle) * r1;
-    const x2 = cx + cos(angle) * r2;
-    const y2 = cy + sin(angle) * r2;
-    line(x1, y1, x2, y2);
-  }
-}
-
-/**
- * Draw a five-pointed star at (x, y), where:
- * @param {*} rOuter the length from the tip of the star to the center of the star
- * @param {*} rInner the length from the valley of the star to the center of the star
- */
-function drawStar(x, y, rOuter, rInner) {
+  // Two-tone background in square
   fill(255);
-  noStroke();
+  triangle(offsetX, offsetY, offsetX+side, offsetY, offsetX, offsetY+side);
+  fill(0);
+  triangle(offsetX+side, offsetY+side, offsetX+side, offsetY, offsetX, offsetY+side);
+
+  // Draw all elements
+  drawSunMoon( positions.sun1 );
+  drawSunMoon( positions.sun2 );
+  drawEgg(     positions.egg1 );
+  drawEgg(     positions.egg2 );
+  drawGreenCircle( positions.green1 );
+  drawGreenCircle( positions.green2 );
+  drawBlueCircle(  positions.blue1 );
+  drawBlueCircle(  positions.blue2 );
+  drawConcentricCircles( positions.conc1 );
+  drawConcentricCircles( positions.conc2 );
+  drawFlawerCircles(    positions.flow1 );
+  drawFlawerCircles(    positions.flow2 );
+  drawSectorCircles(    positions.sect1 );
+  drawSectorCircles(    positions.sect2 );
+  drawBlackCircles(     positions.black1 );
+  drawBlackCircles(     positions.black2 );
+  drawRedCircle(        positions.red    );
+
+  drawingContext.restore();
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  calculateCanvas();
+  redraw();
+}
+
+function calculateCanvas() {
+  side    = min(windowWidth, windowHeight);
+  offsetX = (windowWidth  - side) / 2;
+  offsetY = (windowHeight - side) / 2;
+  dr      = side * RADIUS_RATIO;
+}
+
+function toCanvas(p) {
+  return { x: offsetX + p.x*side, y: offsetY + p.y*side };
+}
+
+// ... (all drawHelper functions unchanged, as in previous version) ...
+
+
+
+function drawStar(cx, cy, rOut, rIn) {
+  fill(255); noStroke();
   beginShape();
-  let angle = -PI / 2;
-  const step = TWO_PI / 5;
-  for (let i = 0; i < 5; i++) {
-    vertex(
-      x + cos(angle) * rOuter,
-      y + sin(angle) * rOuter
-    );
-    angle += step / 2;
-    vertex(
-      x + cos(angle) * rInner,
-      y + sin(angle) * rInner
-    );
-    angle += step / 2;
+  let ang = -PI/2;
+  const step = TWO_PI/5;
+  for (let i=0; i<5; i++) {
+    vertex(cx + cos(ang)*rOut, cy + sin(ang)*rOut);
+    ang += step/2;
+    vertex(cx + cos(ang)*rIn, cy + sin(ang)*rIn);
+    ang += step/2;
   }
   endShape(CLOSE);
 }
 
-//Drawing on drawEgg(140,136) 和 drawEgg(-8, 268)
-function drawEgg(cx, cy) {
-  const Egg = color(255, 214, 160);
-  const Egg2 = color(254, 181, 81);
-  const Egg3 = color(255, 255, 255);
-  const dark = color(235, 167, 85);
-  const heartGreen = color(189, 213, 131);
+function drawHeart(x, y, size) {
+  noStroke(); fill(color(189,213,131));
+  const r = size*0.47;
+  const off = size*0.35;
+  ellipse(x - off*0.5, y - off*0.5, r, r);
+  ellipse(x + off*0.5, y - off*0.5, r, r);
+  beginShape();
+  vertex(x - r*0.5, y);
+  vertex(x + r*0.5, y);
+  vertex(x, y + off*0.5);
+  endShape(CLOSE);
+}
 
-  //Draw a light orange circle with a thick stroke (strokeWeight = 10)
-  strokeWeight(10);
-  stroke(Egg);
-  noFill();
-  //DIAMETER = RADIUS * 2 = 108
-  ellipse(cx, cy, (RADIUS * 2) - 10, (RADIUS * 2) - 10);
+function drawSunMoon(norm) {
+  const {x: cx, y: cy} = toCanvas(norm);
+  const orange = color(241,168,128), darkO = color(236,120,46);
+  const strokeW = (5/400)*side;
+  // outer circle
+  strokeWeight(strokeW); stroke(orange); noFill();
+  ellipse(cx, cy, dr*2, dr*2);
+  // filled half
+  noStroke(); fill(orange);
+  arc(cx, cy, dr*2, dr*2, PI/2, 3*PI/2);
+  fill(255); ellipse(cx, cy, (40/400)*side, (40/400)*side);
+  fill(darkO); arc(cx, cy, (40/400)*side, (40/400)*side, -PI/2, PI/2);
+  // star
+  drawStar(cx, cy, (6/400)*side, (4/400)*side);
+  // radiating lines
+  stroke(orange); strokeWeight((2/400)*side);
+  for (let i=0; i<10; i++) {
+    const a = -PI/2 + i*(PI/5);
+    line(cx + cos(a)*(dr+4/400*side), cy + sin(a)*(dr+4/400*side),
+         cx + cos(a)*(dr+20/400*side), cy + sin(a)*(dr+20/400*side));
+  }
+}
 
-  //Draw a light orange solid circle with a radius of 30 in the center
-  noStroke();
-  fill(Egg2);
-  ellipse(cx, cy, 50, 50);
-
-  noStroke();
-  fill(Egg3);
-  ellipse(cx, cy, 20, 20);
-
-  //Add a dark brown thin stroke around the edge of the center solid circle.
-  strokeWeight(2);
-  stroke(dark);
-  noFill();
-  ellipse(cx, cy, RADIUS * 2, RADIUS * 2);
-
-  //Insert 8 light green hearts on the white ring
+function drawEgg(norm) {
+  const {x: cx, y: cy} = toCanvas(norm);
+  // colors
+  const Egg = color(255,214,160), Egg2=color(254,181,81), Egg3=color(255), dark=color(235,167,85);
+  // outer ring
+  strokeWeight((10/400)*side); stroke(Egg); noFill();
+  ellipse(cx, cy, dr*2 - (10/400)*side, dr*2 - (10/400)*side);
+  // inner solid circles
+  noStroke(); fill(Egg2);
+  ellipse(cx, cy, (50/400)*side, (50/400)*side);
+  fill(Egg3); ellipse(cx, cy, (20/400)*side, (20/400)*side);
+  // dark stroke around center circle
+  strokeWeight((2/400)*side); stroke(dark); noFill();
+  ellipse(cx, cy, dr*2, dr*2);
+  // hearts
   const heartCount = 8;
-  const ringRadius = RADIUS - 15;
-  const heartSize = 15;
-
-  noStroke();
-  fill(heartGreen);
-  for (let i = 0; i < heartCount; i++) {
-    const angle = (TWO_PI / heartCount) * i - PI / 2;
-    const hx = cx + cos(angle) * ringRadius;
-    const hy = cy + sin(angle) * ringRadius;
-    drawHeart(hx, hy, heartSize, heartGreen);
+  const ringR = dr - (15/400)*side;
+  const size = (15/400)*side;
+  noStroke(); fill(color(189,213,131));
+  for (let i=0; i<heartCount; i++) {
+    const a = -PI/2 + i*(TWO_PI/heartCount);
+    const hx = cx + cos(a)*ringR;
+    const hy = cy + sin(a)*ringR;
+    drawHeart(hx, hy, size);
   }
 }
 
-/**
-* Draw a solid heart at (x, y), with a size of approximately size,
-* Made up of two small circles + a triangle
- */
-function drawHeart(x, y, size, c) {
-  fill(c);
-  noStroke();
-
-  const r = size * 0.47;
-  const offset = size * 0.35; //The offset between the center of the circle and the vertex of the triangle
-
-  //left
-  ellipse(x - offset * 0.5, y - offset * 0.5, r, r);
-  //right
-  ellipse(x + offset * 0.5, y - offset * 0.5, r, r);
-  //bottom
-  beginShape();
-  vertex(x - r * 0.5, y);//left
-  vertex(x + r * 0.5, y);//right
-  vertex(x, y + offset * 0.5); //bottom
-  endShape(CLOSE);
-}
-
-/**
- * Drawing on drawGreenCircle(108,248) and drawGreenCircle(292, 3)
- */
-function drawGreenCircle(cx, cy) {
-  const green = color(166, 198, 124);
-  const paleGreen = color(187, 214, 161);
-  const red = color(227, 170, 155);
-  const yellow = color(239, 199, 120);
-
-  //Outer green stroke (stroke 3) - keep the diameter at 108 and extend the stroke 1.5 pixels inside and outside the grey circle
-  strokeWeight(3);
-  stroke(green);
+function drawGreenCircle(norm) {
+  const {x: cx, y: cy} = toCanvas(norm);
+  const green = color(166,198,124), pale = color(187,214,161), red=color(227,170,155), yellow=color(239,199,120);
   noFill();
-  ellipse(cx, cy, (RADIUS * 2) - 3, (RADIUS * 2) - 3);
-
-  strokeWeight(6);
-  stroke(green);
-  noFill();
-  ellipse(cx, cy, (RADIUS * 2) - 20, (RADIUS * 2) - 20);
-
-  strokeWeight(3);
-  stroke(red);
-  noFill();
-  ellipse(cx, cy, (RADIUS * 2) - 35, (RADIUS * 2) - 35);
-
-  strokeWeight(3);
-  stroke(yellow);
-  noFill();
-  ellipse(cx, cy, (RADIUS * 2) - 49, (RADIUS * 2) - 49);
-
-  //A light green solid circle with a center radius of 20
-  noStroke();
-  fill(paleGreen);
-  ellipse(cx, cy, 40, 40);
-
-//Randomly distribute 40 small white dots inside the light green circle above
-//Make the dots evenly distributed within a radius of 10: use sqrt(random()) * r to get a uniform distribution
+  strokeWeight((3/400)*side); stroke(green);
+  ellipse(cx, cy, dr*2 - (3/400)*side, dr*2 - (3/400)*side);
+  strokeWeight((6/400)*side); stroke(green);
+  ellipse(cx, cy, dr*2 - (20/400)*side, dr*2 - (20/400)*side);
+  strokeWeight((3/400)*side); stroke(red);
+  ellipse(cx, cy, dr*2 - (35/400)*side, dr*2 - (35/400)*side);
+  stroke(color(yellow));
+  ellipse(cx, cy, dr*2 - (49/400)*side, dr*2 - (49/400)*side);
+  noStroke(); fill(pale);
+  ellipse(cx, cy, (40/400)*side, (40/400)*side);
+  // dots
   fill(255);
-  noStroke();
-  const dotCount = 40;
-  const maxR = 10; //Max radius
-
-  for (let i = 0; i < dotCount; i++) {
-    //random degree
-    const angle = random(0, TWO_PI);
-    //Random radius, using sqrt(random()) to ensure that the points are evenly distributed within the circle
-    const r = sqrt(random()) * maxR;
-    const dx = cos(angle) * r;
-    const dy = sin(angle) * r;
-    //The radius of the small white dot is about 1 pixel (diameter 2)
-    ellipse(cx + dx, cy + dy, 2, 2);
+  const dotCount = 40, maxR=(10/400)*side;
+  for (let i=0; i<dotCount; i++) {
+    const a = random(TWO_PI);
+    const r = sqrt(random())*maxR;
+    ellipse(cx + cos(a)*r, cy + sin(a)*r, (2/400)*side, (2/400)*side);
   }
 }
 
-/**
- * Drawing on drawBlueCircle(28, 160) and drawBlueCircle(172, 28)
- */
-function drawBlueCircle(cx, cy) {
-  //define lightblue
-  const lightBlue = color(163, 202, 217);
-  const lightRed = color(235, 190, 181);
-  const lightYellow = color(234, 205, 155);
-
-  //Light blue stroke for the outer circle (stroke = 5), diameter remains RADIUS*2 = 108
-  strokeWeight(5);
-  stroke(lightBlue);
+function drawBlueCircle(norm) {
+  const {x: cx, y: cy} = toCanvas(norm);
+  const lightBlue = color(163,202,217), lightRed = color(235,190,181), lightY = color(234,205,155);
   noFill();
-  ellipse(cx, cy, (RADIUS * 2) - 5, (RADIUS * 2) - 5);
-
-  strokeWeight(5);
+  strokeWeight((5/400)*side); stroke(lightBlue);
+  ellipse(cx, cy, dr*2 - (5/400)*side, dr*2 - (5/400)*side);
   stroke(lightRed);
-  noFill();
-  ellipse(cx, cy, (RADIUS * 2) - 27, (RADIUS * 2) - 27);
-
-  strokeWeight(5);
-  stroke(lightYellow);
-  noFill();
-  ellipse(cx, cy, (RADIUS * 2) - 50, (RADIUS * 2) - 50);
-
-
-  //On the white band between the three strokes above, draw 16 groups of two small circles with a radius of 1.5
-  //Calculate the radii of the red and yellow rings
-  const radiusRed = ((RADIUS * 2) - 27) / 2;
-  const radiusYellow = ((RADIUS * 2) - 50) / 2;
-  //The center radius of the white ring
-  const ringMid = (radiusRed + radiusYellow) / 2;
-
-  //Set the radius of the small circle and the offset along the tangent direction
-  const smallR = 1.5;
-  const offsetDistance = smallR; //Let the distance between the centers of two adjacent small circles be 3  (radius*2), and multiply the tangent unit vector by smallR
-  noStroke();
-  fill(lightRed);
-
-  const total = 16;
-  const angleStep = TWO_PI / total;
-
-  for (let i = 0; i < total; i++) {
-    const angle = -PI / 2 + i * angleStep; 
-    //The reference point (bx, by) is located at the center of the white ring
-    const bx = cx + cos(angle) * ringMid;
-    const by = cy + sin(angle) * ringMid;
-
-    //Compute the unit vector (tx, ty) in the direction of the tangent line
-    const tx = -sin(angle);
-    const ty = cos(angle);
-
-    //circles
-    const x1 = bx + tx * offsetDistance;
-    const y1 = by + ty * offsetDistance;
-    const x2 = bx - tx * offsetDistance;
-    const y2 = by - ty * offsetDistance;
-
-    //radius = 2
-    ellipse(x1, y1, smallR * 2, smallR * 2);
-    ellipse(x2, y2, smallR * 2, smallR * 2);
+  ellipse(cx, cy, dr*2 - (27/400)*side, dr*2 - (27/400)*side);
+  stroke(lightY);
+  ellipse(cx, cy, dr*2 - (50/400)*side, dr*2 - (50/400)*side);
+  // white band circles
+  const radiusRed = (dr*2 - (27/400)*side)/2;
+  const radiusYellow = (dr*2 - (50/400)*side)/2;
+  const mid = (radiusRed + radiusYellow)/2;
+  const smallR=(1.5/400)*side;
+  noStroke(); fill(lightRed);
+  for (let i=0; i<16; i++) {
+    const a=-PI/2 + i*(TWO_PI/16);
+    const bx=cx+cos(a)*mid, by=cy+sin(a)*mid;
+    const tx=-sin(a), ty=cos(a);
+    ellipse(bx+tx*smallR, by+ty*smallR, smallR*2, smallR*2);
+    ellipse(bx-tx*smallR, by-ty*smallR, smallR*2, smallR*2);
   }
-
-  //Light blue solid circle with center radius 20 (diameter 40)
-  noStroke();
-  fill(lightBlue);
-  ellipse(cx, cy, 40, 40);
-}
-/**
- * Drawing on drawConcentricCircles(340,192) and drawConcentricCircles(184,340)
- */
-
-function drawConcentricCircles(cx, cy) {
-  //Outermost layer: 36 oil painting style color blocks 
-  const numBlocks = 36;
-  
-  const fixedWeights = Array(numBlocks).fill(1);
-  const totalW = fixedWeights.reduce((sum, w) => sum + w, 0);
-  const angles = fixedWeights.map(w => (w / totalW) * TWO_PI);
-
-  //Outermost color ring
-  const oilPalette = [
-    [138,  54,  15], // Burnt Sienna
-    [ 99,  81,  71], // Raw Umber
-    [204, 183, 102], // Yellow Ochre
-    [227,   0,  34], // Cadmium Red
-    [227,  38,  54], // Alizarin Crimson
-    [  0,  49,  83], // Prussian Blue
-    [  0, 105,  70], // Phthalo Green
-    [ 64, 130, 109], // Viridian
-    [ 41,  36,  33], // Ivory Black
-    [255, 255, 255]  // Titanium White
-  ];
-
-  // Draw the outermost 36 equiangular oil painting fan shapes
-  noStroke();
-  let currentAngle = 0;
-  for (let i = 0; i < numBlocks; i++) {
-    const [r, g, b] = oilPalette[i % oilPalette.length];
-    fill(r, g, b);
-    arc(
-      cx, cy,
-      RADIUS * 2,      
-      RADIUS * 2,
-      currentAngle,
-      currentAngle + angles[i],
-      PIE
-    );
-    currentAngle += angles[i];
-  }
-
-  // The middle 5 concentric circles
-  noStroke();
-  fill(150,  30,  30);
-  ellipse(cx, cy, 80, 80);
-
-  fill(200, 100,   0);
-  ellipse(cx, cy, 65, 65);
-
-  fill( 80,   0,  80);
-  ellipse(cx, cy, 50, 50);
-
-  fill(  0,  60,  30);
-  ellipse(cx, cy, 35, 35);
-
-  fill( 25,  25, 112);
-  ellipse(cx, cy, 20, 20);
-
-  //Outermost blue border 
-  noFill();
-  stroke(30, 55, 120); 
-  strokeWeight(2);
-  ellipse(cx, cy, (RADIUS * 2) + 2, (RADIUS * 2) + 2);
-
-  colorMode(RGB, 255);
+  noStroke(); fill(lightBlue);
+  ellipse(cx, cy, (40/400)*side, (40/400)*side);
 }
 
-/**
- * Drawing on drawFlawerCircles(64,356) and drawFlawerCircles(304,308);It is composed of 20 sectors, and 14 petals are drawn on the sector circle.
-*/
-function drawFlawerCircles(cx, cy) {
-  const numSlices = 20; //  The outermost layer uses 20 sectors to fill the entire circle 
-  const angleStep = TWO_PI / numSlices;
-
-  const oilPalette = [
-   [205,  92,   0],   
-   [ 87,   1,  79],   
-   [ 34,  34,  59],   
-   [184, 134,  11],   
-   [ 255, 65, 108],   
-   [227, 0, 34],   
-   [152, 255, 152],   
-   [147, 112, 219],   
-   [ 25,  25, 112],   
-  ];
-
+function drawConcentricCircles(norm) {
+  const {x: cx, y: cy} = toCanvas(norm);
+  const oilPalette = [[138,54,15],[99,81,71],[204,183,102],[227,0,34],[227,38,54],[0,49,83],[0,105,70],[64,130,109],[41,36,33],[255,255,255]];
+  const num=36;
+  const angles = Array(num).fill(1).map((_,i,arr)=>TWO_PI/arr.length);
+  let ang=0;
   noStroke();
-  for (let i = 0; i < numSlices; i++) {
-    const [r, g, b] = oilPalette[i % oilPalette.length];
-    fill(r, g, b);
-    arc(
-      cx, cy,
-      RADIUS * 2,     
-      RADIUS * 2,
-      i * angleStep,
-      (i + 1) * angleStep,
-      PIE
-    );
+  for (let i=0; i<num; i++) {
+    const c=oilPalette[i%oilPalette.length]; fill(...c);
+    arc(cx, cy, dr*2, dr*2, ang, ang+angles[i], PIE);
+    ang+=angles[i];
   }
+  // inner rings
+  const inners=[80,65,50,35,20].map(d=>d/400*side);
+  const colors=[[150,30,30],[200,100,0],[80,0,80],[0,60,30],[25,25,112]];
+  inners.forEach((d,i)=>{fill(...colors[i]);ellipse(cx,cy,d,d);});
+  noFill(); stroke(30,55,120); strokeWeight((2/400)*side);
+  ellipse(cx,cy,dr*2+(2/400)*side,dr*2+(2/400)*side);
+  colorMode(RGB,255);
+}
 
-  // Draw 14 petals
-  const numPetals = 14;
-  const petalAngle = TWO_PI / numPetals;
-
-  const petalLength = RADIUS * 1.2;  
-  const petalWidth  = 12;           
-  const petalOffset = petalLength / 2;
-
+function drawFlawerCircles(norm) {
+  const {x: cx, y: cy} = toCanvas(norm);
+  const palette=[[205,92,0],[87,1,79],[34,34,59],[184,134,11],[255,65,108],[227,0,34],[152,255,152],[147,112,219],[25,25,112]];
+  const slices=20; const petalCount=14;
   noStroke();
-  for (let i = 0; i < numPetals; i++) {
-    const [rCol, gCol, bCol] = oilPalette[i % oilPalette.length];
-    fill(rCol, gCol, bCol);
-
-    const theta = i * petalAngle - PI / 2;
-    push();
-      translate(cx, cy);
-      rotate(theta);
-      // Petals: ellipse centered at (petalOffset, 0), size (petalLength, petalWidth)
-      ellipse(petalOffset, 0, petalLength, petalWidth);
+  for (let i=0; i<slices; i++) {
+    fill(...palette[i%palette.length]);
+    arc(cx, cy, dr*2, dr*2, i*(TWO_PI/slices), (i+1)*(TWO_PI/slices), PIE);
+  }
+  const length=dr*1.2, widthP=(12/400)*side;
+  for (let i=0; i<petalCount; i++) {
+    fill(...palette[i%palette.length]);
+    const theta=i*(TWO_PI/petalCount)-PI/2;
+    push(); translate(cx,cy); rotate(theta);
+    ellipse(length/2,0,length,widthP);
     pop();
   }
-
-  //Flirtatious
-  fill(255, 165, 0);
-  noStroke();
-  const coreRadius = RADIUS * 0.3;  
-  ellipse(cx, cy, coreRadius * 2, coreRadius * 2);
+  fill(255,165,0); ellipse(cx,cy,(dr*0.3)*2,(dr*0.3)*2);
 }
 
-
-/**
- Drawing on drawSectorCircles(224,220) and drawSectorCircles(420,284)
- */
- 
-function drawSectorCircles(cx, cy) {
-  
-  const oilPalette = [
-    [138,  54,  15], 
-    [ 99,  81,  71], 
-    [204, 183, 102], 
-    [227,   0,  34], 
-    [227,  38,  54], 
-    [  0,  49,  83], 
-    [  0, 105,  70], 
-    [ 64, 130, 109], 
-    [ 41,  36,  33], 
-    [255, 255, 255]  
-  ];
-
-  // Outermost layer 40 sectors
-  const numOuter = 40;
-  const outerAngleStep = TWO_PI / numOuter;
-  const outerDiameter = RADIUS * 2 ; 
-
+function drawSectorCircles(norm) {
+  const {x: cx, y: cy} = toCanvas(norm);
+  const palette=[[138,54,15],[99,81,71],[204,183,102],[227,0,34],[227,38,54],[0,49,83],[0,105,70],[64,130,109],[41,36,33],[255,255,255]];
+  const outer=40, inner=30;
   noStroke();
-  for (let i = 0; i < numOuter; i++) {
- 
-    const [r, g, b] = oilPalette[i % oilPalette.length];
-    fill(r, g, b);
-    arc(
-      cx, cy,
-      outerDiameter, outerDiameter,
-      i * outerAngleStep,
-      (i + 1) * outerAngleStep,
-      PIE
-    );
+  for (let i=0; i<outer; i++) {
+    const c=palette[i%palette.length]; fill(...c);
+    arc(cx,cy,dr*2,dr*2,i*(TWO_PI/outer),(i+1)*(TWO_PI/outer),PIE);
   }
-
-  // Black solid ring
-  noStroke();
-  fill(0);
-  ellipse(cx, cy, RADIUS * 2 - 20, RADIUS * 2 - 20); 
-
-  //Inner layer 30 sectors
-  const numInner = 30;
-  const innerAngleStep = TWO_PI / numInner;
-  const innerDiameter = RADIUS * 2 - 30; 
-  noStroke();
-  for (let i = 0; i < numInner; i++) {
-    
-    const [r, g, b] = oilPalette[(i + 3) % oilPalette.length];
-    fill(r, g, b);
-    arc(
-      cx, cy,
-      innerDiameter, innerDiameter,
-      i * innerAngleStep,
-      (i + 1) * innerAngleStep,
-      PIE
-    );
+  fill(0); ellipse(cx,cy,dr*2-(20/400)*side,dr*2-(20/400)*side);
+  for (let i=0; i<inner; i++) {
+    const c=palette[(i+3)%palette.length]; fill(...c);
+    arc(cx,cy,dr*2-(30/400)*side,dr*2-(30/400)*side,i*(TWO_PI/inner),(i+1)*(TWO_PI/inner),PIE);
   }
-  
-  noStroke();
-  const [coreR, coreG, coreB] = oilPalette[2]; 
-  fill(coreR, coreG, coreB);
-  const coreDiameter = 20; 
-  ellipse(cx, cy, coreDiameter, coreDiameter);
+  fill(...palette[2]); ellipse(cx,cy,(20/400)*side,(20/400)*side);
 }
 
-
-/**
-  Drawing on drawBlackCircles(378,80) and drawBlackCircles(260,428)
- */
-function drawBlackCircles(cx, cy) {
-  const oilPalette = [
-    [138,  54,  15], 
-    [ 99,  81,  71], 
-    [204, 183, 102], 
-    [227,   0,  34], 
-    [227,  38,  54], 
-    [  0,  49,  83], 
-    [  0, 105,  70], 
-    [ 64, 130, 109], 
-    [ 41,  36,  33], 
-    [255, 255, 255]  
-  ];
-
-
-  noStroke();
-  fill(148, 0, 211);
-  ellipse(cx, cy, 110, 110);
-
-  noStroke();
-  fill(0, 102, 204);
-  ellipse(cx, cy, 100, 100);
-
-  noStroke();
-  fill(0);
-  ellipse(cx, cy, 90, 90);
-
-  const numLines = 100;
-  const lineColor = color(...oilPalette[9]); 
-  stroke(lineColor);
-  strokeWeight(2);
-  for (let i = 0; i < numLines; i++) {
-    const theta = i * TWO_PI / numLines;
-
-    const rOuter = 45;
-    const rInner = 30;
-    const x1 = cx + cos(theta) * rInner;
-    const y1 = cy + sin(theta) * rInner;
-    const x2 = cx + cos(theta) * rOuter;
-    const y2 = cy + sin(theta) * rOuter;
-    line(x1, y1, x2, y2);
+function drawBlackCircles(norm) {
+  const {x: cx, y: cy} = toCanvas(norm);
+  noStroke(); fill(148,0,211); ellipse(cx,cy,(110/400)*side,(110/400)*side);
+  fill(0,102,204); ellipse(cx,cy,(100/400)*side,(100/400)*side);
+  fill(0); ellipse(cx,cy,(90/400)*side,(90/400)*side);
+  const lines=100;
+  stroke(...[255,255,255]); strokeWeight((2/400)*side);
+  for (let i=0;i<lines;i++){const a=i*(TWO_PI/lines);
+    line(cx+cos(a)*(30/400)*side,cy+sin(a)*(30/400)*side,
+         cx+cos(a)*(45/400)*side,cy+sin(a)*(45/400)*side);
   }
-  noStroke();
-
- 
-  const threePalette = [
-    [255, 192, 203], 
-    [221, 160, 221], 
-    [255, 255, 204]  
-  ];
-  const numThree = 3;
-  const threeAngle = TWO_PI / numThree;
-  const threeDiameter = 60;
-  noStroke();
-  for (let i = 0; i < numThree; i++) {
-    const [r, g, b] = threePalette[i];
-    fill(r, g, b);
-    arc(
-      cx, cy,
-      threeDiameter, threeDiameter,
-      i * threeAngle,
-      (i + 1) * threeAngle,
-      PIE
-    );
+  noStroke(); const pal=[[255,192,203],[221,160,221],[255,255,204]];
+  for(let i=0;i<3;i++){fill(...pal[i]); const a=i*(TWO_PI/3);
+    arc(cx,cy,(60/400)*side,(60/400)*side,a,a+(TWO_PI/3),PIE);
   }
- 
-  noStroke();
-  fill(255);
-  ellipse(cx, cy, 30, 30);
-
-  noStroke();
-  fill(0, 102, 204);
-  ellipse(cx, cy, 20, 20);
+  fill(255); ellipse(cx,cy,(30/400)*side,(30/400)*side);
+  fill(0,102,204); ellipse(cx,cy,(20/400)*side,(20/400)*side);
 }
 
-/**
- drawing on drawRedCircle(380,400)
- */
-function drawRedCircle(cx, cy) {
+function drawRedCircle(norm) {
+  const {x: cx, y: cy} = toCanvas(norm);
   noFill();
-
-  stroke(150,  30,  30);
-  strokeWeight(12);
-  ellipse(cx, cy, 100, 100);
- 
-  stroke(200, 100,   0);
-  strokeWeight(10);
-  ellipse(cx, cy,  80,  80);
-  
-  stroke( 80,   0,  80);
-  strokeWeight(8);
-  ellipse(cx, cy,  60,  60);
-  
-  stroke(  0,  60,  30);
-  strokeWeight(6);
-  ellipse(cx, cy,  40,  40);
-
-  stroke( 25,  25, 112);
-  strokeWeight(4);
-  ellipse(cx, cy,  20,  20);
-
-  noStroke();
+  const weights=[12,10,8,6,4].map(w=> (w/400)*side);
+  const cols=[[150,30,30],[200,100,0],[80,0,80],[0,60,30],[25,25,112]];
+  const radii=[100,80,60,40,20].map(d=> (d/400)*side);
+  for(let i=0;i<5;i++){
+    stroke(...cols[i]); strokeWeight(weights[i]);
+    ellipse(cx,cy,radii[i],radii[i]);
+  }
 }
-
