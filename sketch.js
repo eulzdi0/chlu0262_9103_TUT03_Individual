@@ -402,36 +402,20 @@ function drawBlueCircle(cx, cy) {
  */
 
 function drawConcentricCircles(cx, cy) {
-  //Outermost layer: 36 oil painting style color blocks 
   const numBlocks = 36;
-  
   const fixedWeights = Array(numBlocks).fill(1);
   const totalW = fixedWeights.reduce((sum, w) => sum + w, 0);
   const angles = fixedWeights.map(w => (w / totalW) * TWO_PI);
 
-  //Outermost color ring
-  const oilPalette = [
-    [138,  54,  15], // Burnt Sienna
-    [ 99,  81,  71], // Raw Umber
-    [204, 183, 102], // Yellow Ochre
-    [227,   0,  34], // Cadmium Red
-    [227,  38,  54], // Alizarin Crimson
-    [  0,  49,  83], // Prussian Blue
-    [  0, 105,  70], // Phthalo Green
-    [ 64, 130, 109], // Viridian
-    [ 41,  36,  33], // Ivory Black
-    [255, 255, 255]  // Titanium White
-  ];
-
-  // Draw the outermost 36 equiangular oil painting fan shapes
+  colorMode(RGB, 255);
   noStroke();
   let currentAngle = 0;
+  // Outermost 随机色扇形
   for (let i = 0; i < numBlocks; i++) {
-    const [r, g, b] = oilPalette[i % oilPalette.length];
-    fill(r, g, b);
+    fill(random(255), random(255), random(255));
     arc(
       cx, cy,
-      RADIUS * 2,      
+      RADIUS * 2,
       RADIUS * 2,
       currentAngle,
       currentAngle + angles[i],
@@ -440,58 +424,32 @@ function drawConcentricCircles(cx, cy) {
     currentAngle += angles[i];
   }
 
-  // The middle 5 concentric circles
-  noStroke();
-  fill(150,  30,  30);
-  ellipse(cx, cy, 80, 80);
+  // 中间五个同心圆，随机填充
+  const middleDiameters = [80, 65, 50, 35, 20];
+  for (let d of middleDiameters) {
+    fill(random(255), random(255), random(255));
+    ellipse(cx, cy, d, d);
+  }
 
-  fill(200, 100,   0);
-  ellipse(cx, cy, 65, 65);
-
-  fill( 80,   0,  80);
-  ellipse(cx, cy, 50, 50);
-
-  fill(  0,  60,  30);
-  ellipse(cx, cy, 35, 35);
-
-  fill( 25,  25, 112);
-  ellipse(cx, cy, 20, 20);
-
-  //Outermost blue border 
+  // 最外层蓝色边框 → 随机色边框
   noFill();
-  stroke(30, 55, 120); 
+  stroke(random(255), random(255), random(255));
   strokeWeight(2);
   ellipse(cx, cy, (RADIUS * 2) + 2, (RADIUS * 2) + 2);
-
-  colorMode(RGB, 255);
 }
 
-/**
- * Drawing on drawFlawerCircles(64,356) and drawFlawerCircles(304,308);It is composed of 20 sectors, and 14 petals are drawn on the sector circle.
-*/
 function drawFlawerCircles(cx, cy) {
-  const numSlices = 20; //  The outermost layer uses 20 sectors to fill the entire circle 
+  const numSlices = 20;
   const angleStep = TWO_PI / numSlices;
 
-  const oilPalette = [
-   [205,  92,   0],   
-   [ 87,   1,  79],   
-   [ 34,  34,  59],   
-   [184, 134,  11],   
-   [ 255, 65, 108],   
-   [227, 0, 34],   
-   [152, 255, 152],   
-   [147, 112, 219],   
-   [ 25,  25, 112],   
-  ];
-
+  colorMode(RGB, 255);
   noStroke();
+  // 外层 20 扇形，随机填色
   for (let i = 0; i < numSlices; i++) {
-    const [r, g, b] = oilPalette[i % oilPalette.length];
-    fill(r, g, b);
+    fill(random(255), random(255), random(255));
     arc(
       cx, cy,
-      RADIUS * 2,     
+      RADIUS * 2,
       RADIUS * 2,
       i * angleStep,
       (i + 1) * angleStep,
@@ -499,142 +457,90 @@ function drawFlawerCircles(cx, cy) {
     );
   }
 
-  // Draw 14 petals
+  // 14 片花瓣，随机填色
   const numPetals = 14;
   const petalAngle = TWO_PI / numPetals;
-
-  const petalLength = RADIUS * 1.2;  
-  const petalWidth  = 12;           
+  const petalLength = RADIUS * 1.2;
+  const petalWidth  = 12;
   const petalOffset = petalLength / 2;
 
-  noStroke();
   for (let i = 0; i < numPetals; i++) {
-    const [rCol, gCol, bCol] = oilPalette[i % oilPalette.length];
-    fill(rCol, gCol, bCol);
-
     const theta = i * petalAngle - PI / 2;
     push();
       translate(cx, cy);
       rotate(theta);
-      // Petals: ellipse centered at (petalOffset, 0), size (petalLength, petalWidth)
+      fill(random(255), random(255), random(255));
       ellipse(petalOffset, 0, petalLength, petalWidth);
     pop();
   }
 
-  //Flirtatious
-  fill(255, 165, 0);
+  // 花心
+  fill(random(255), random(255), random(255));
   noStroke();
-  const coreRadius = RADIUS * 0.3;  
+  const coreRadius = RADIUS * 0.3;
   ellipse(cx, cy, coreRadius * 2, coreRadius * 2);
 }
 
-
-/**
- Drawing on drawSectorCircles(224,220) and drawSectorCircles(420,284)
- */
- 
 function drawSectorCircles(cx, cy) {
-  
-  const oilPalette = [
-    [138,  54,  15], 
-    [ 99,  81,  71], 
-    [204, 183, 102], 
-    [227,   0,  34], 
-    [227,  38,  54], 
-    [  0,  49,  83], 
-    [  0, 105,  70], 
-    [ 64, 130, 109], 
-    [ 41,  36,  33], 
-    [255, 255, 255]  
-  ];
+  colorMode(RGB, 255);
+  noStroke();
 
-  // Outermost layer 40 sectors
+  // 外层 40 扇形
   const numOuter = 40;
   const outerAngleStep = TWO_PI / numOuter;
-  const outerDiameter = RADIUS * 2 ; 
-
-  noStroke();
   for (let i = 0; i < numOuter; i++) {
- 
-    const [r, g, b] = oilPalette[i % oilPalette.length];
-    fill(r, g, b);
+    fill(random(255), random(255), random(255));
     arc(
       cx, cy,
-      outerDiameter, outerDiameter,
+      RADIUS * 2,
+      RADIUS * 2,
       i * outerAngleStep,
       (i + 1) * outerAngleStep,
       PIE
     );
   }
 
-  // Black solid ring
-  noStroke();
-  fill(0);
-  ellipse(cx, cy, RADIUS * 2 - 20, RADIUS * 2 - 20); 
+  // 实心环
+  fill(random(255), random(255), random(255));
+  ellipse(cx, cy, RADIUS * 2 - 20, RADIUS * 2 - 20);
 
-  //Inner layer 30 sectors
+  // 内层 30 扇形
   const numInner = 30;
   const innerAngleStep = TWO_PI / numInner;
-  const innerDiameter = RADIUS * 2 - 30; 
-  noStroke();
+  const innerDiameter = RADIUS * 2 - 30;
   for (let i = 0; i < numInner; i++) {
-    
-    const [r, g, b] = oilPalette[(i + 3) % oilPalette.length];
-    fill(r, g, b);
+    fill(random(255), random(255), random(255));
     arc(
       cx, cy,
-      innerDiameter, innerDiameter,
+      innerDiameter,
+      innerDiameter,
       i * innerAngleStep,
       (i + 1) * innerAngleStep,
       PIE
     );
   }
-  
-  noStroke();
-  const [coreR, coreG, coreB] = oilPalette[2]; 
-  fill(coreR, coreG, coreB);
-  const coreDiameter = 20; 
-  ellipse(cx, cy, coreDiameter, coreDiameter);
+
+  // 中心小圆
+  fill(random(255), random(255), random(255));
+  ellipse(cx, cy, 20, 20);
 }
 
-
-/**
-  Drawing on drawBlackCircles(378,80) and drawBlackCircles(260,428)
- */
 function drawBlackCircles(cx, cy) {
-  const oilPalette = [
-    [138,  54,  15], 
-    [ 99,  81,  71], 
-    [204, 183, 102], 
-    [227,   0,  34], 
-    [227,  38,  54], 
-    [  0,  49,  83], 
-    [  0, 105,  70], 
-    [ 64, 130, 109], 
-    [ 41,  36,  33], 
-    [255, 255, 255]  
-  ];
-
-
+  colorMode(RGB, 255);
   noStroke();
-  fill(148, 0, 211);
-  ellipse(cx, cy, 110, 110);
+  // 三个同心实心圆，随机填色
+  const radii = [110, 100, 90];
+  for (let r of radii) {
+    fill(random(255), random(255), random(255));
+    ellipse(cx, cy, r, r);
+  }
 
-  noStroke();
-  fill(0, 102, 204);
-  ellipse(cx, cy, 100, 100);
-
-  noStroke();
-  fill(0);
-  ellipse(cx, cy, 90, 90);
-
+  // 放射线
   const numLines = 100;
-  const lineColor = color(...oilPalette[9]); 
-  stroke(lineColor);
+  stroke(random(255), random(255), random(255));
   strokeWeight(2);
   for (let i = 0; i < numLines; i++) {
     const theta = i * TWO_PI / numLines;
-
     const rOuter = 45;
     const rInner = 30;
     const x1 = cx + cos(theta) * rInner;
@@ -645,62 +551,38 @@ function drawBlackCircles(cx, cy) {
   }
   noStroke();
 
- 
-  const threePalette = [
-    [255, 192, 203], 
-    [221, 160, 221], 
-    [255, 255, 204]  
-  ];
-  const numThree = 3;
-  const threeAngle = TWO_PI / numThree;
+  // 三段扇形
+  const threeAngle = TWO_PI / 3;
   const threeDiameter = 60;
-  noStroke();
-  for (let i = 0; i < numThree; i++) {
-    const [r, g, b] = threePalette[i];
-    fill(r, g, b);
+  for (let i = 0; i < 3; i++) {
+    fill(random(255), random(255), random(255));
     arc(
       cx, cy,
-      threeDiameter, threeDiameter,
+      threeDiameter,
+      threeDiameter,
       i * threeAngle,
       (i + 1) * threeAngle,
       PIE
     );
   }
- 
-  noStroke();
-  fill(255);
-  ellipse(cx, cy, 30, 30);
 
-  noStroke();
-  fill(0, 102, 204);
+  // 中心双层圆
+  fill(random(255), random(255), random(255));
+  ellipse(cx, cy, 30, 30);
+  fill(random(255), random(255), random(255));
   ellipse(cx, cy, 20, 20);
 }
 
-/**
- drawing on drawRedCircle(380,400)
- */
 function drawRedCircle(cx, cy) {
+  colorMode(RGB, 255);
   noFill();
-
-  stroke(150,  30,  30);
-  strokeWeight(12);
-  ellipse(cx, cy, 100, 100);
- 
-  stroke(200, 100,   0);
-  strokeWeight(10);
-  ellipse(cx, cy,  80,  80);
-  
-  stroke( 80,   0,  80);
-  strokeWeight(8);
-  ellipse(cx, cy,  60,  60);
-  
-  stroke(  0,  60,  30);
-  strokeWeight(6);
-  ellipse(cx, cy,  40,  40);
-
-  stroke( 25,  25, 112);
-  strokeWeight(4);
-  ellipse(cx, cy,  20,  20);
-
+  // 五层描边，每层随机描边色
+  const weights = [12, 10, 8, 6, 4];
+  for (let i = 0; i < weights.length; i++) {
+    stroke(random(255), random(255), random(255));
+    strokeWeight(weights[i]);
+    const diameter = 100 - i * 20;
+    ellipse(cx, cy, diameter, diameter);
+  }
   noStroke();
 }
