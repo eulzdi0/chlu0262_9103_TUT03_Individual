@@ -1,57 +1,81 @@
+// —— 原有数据与常量 —— 
 let circles = [
   [54, 48], [172, 25], [292, 3], [28, 160], [140, 136], [254, 110], [378, 80],
   [-8, 268], [108, 248], [224, 220], [340, 192], [64, 356], [184, 340], [304, 308],
   [420, 284], [260, 428], [380, 400]
 ];
+const RADIUS = 54;  // 所有圆的基准半径 :contentReference[oaicite:2]{index=2}
 
-//The radius of all circles is set to 54
-const RADIUS = 54;
+// —— 倒计时逻辑 —— 
+let countdown = 3;               // 倒计时起始值（秒）
+let lastSecChange = 0;           // 上次秒数更新的时间戳
+const countdownInterval = 1000;  // 每隔 1000ms 减 1
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  noLoop();
-}
-
-function windowResized() {
-  //Reset the canvas and redraw when the window changes
-  resizeCanvas(windowWidth, windowHeight);
-  redraw();
+  // 倒计时样式
+  textAlign(CENTER, CENTER);
+  textSize(120);
+  fill(255);
+  lastSecChange = millis();
 }
 
 function draw() {
+  background(0);
+  if (countdown > 0) {
+    // 每过一秒，倒计时--
+    if (millis() - lastSecChange >= countdownInterval) {
+      countdown--;
+      lastSecChange = millis();
+    }
+    // 居中显示剩余秒数
+    text(countdown, width / 2, height / 2);
+
+  } else {
+    // 倒计时结束，停止循环并渲染主场景
+    noLoop();
+    drawMainScene();
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  // 如果倒计时结束后调整窗口，重绘主场景
+  if (countdown <= 0) redraw();
+}
+
+// —— 原有渲染逻辑封装为函数 —— 
+function drawMainScene() {
   background(255);
 
   const baseSize = 400;
   const s = min(width / baseSize, height / baseSize);
 
-  //Scale and center the 400×400 stage
   push();
-    translate((width  - baseSize * s) / 2, (height - baseSize * s) / 2);
+    translate((width - baseSize * s) / 2, (height - baseSize * s) / 2);
     scale(s);
 
-    /**
-     * First save the current canvas state, start a new path and define the clipping area with a rectangle of (0,0)-(baseSize,baseSize), 
-     * then call clip() so that subsequent drawing is only visible inside the rectangle.
-     */
+    // 裁剪到 400×400 区域
     drawingContext.save();
     drawingContext.beginPath();
     drawingContext.rect(0, 0, baseSize, baseSize);
     drawingContext.clip();
-    
-    //background
-    noStroke();
-    fill(255);
-    triangle(0,0,400,0,0,400);
-    fill(0);
-    triangle(400,400,400,0,0,400);
 
-    //circles
+    // 分割背景
     noStroke();
     fill(255);
-    for (let [x,y] of circles) {
-      ellipse(x,y, RADIUS*2, RADIUS*2);
+    triangle(0, 0, baseSize, 0, 0, baseSize);
+    fill(0);
+    triangle(baseSize, baseSize, baseSize, 0, 0, baseSize);
+
+    // 先绘制所有白色底圆
+    noStroke();
+    fill(255);
+    for (let [x, y] of circles) {
+      ellipse(x, y, RADIUS * 2, RADIUS * 2);
     }
 
+    // 各类图案——按原顺序调用
     drawSunMoon(254, 110);
     drawSunMoon(54, 48);
 
@@ -64,19 +88,21 @@ function draw() {
     drawBlueCircle(28, 160);
     drawBlueCircle(172, 25);
 
-    drawConcentricCircles(340,192);
-    drawConcentricCircles(184,340);
+    drawConcentricCircles(340, 192);
+    drawConcentricCircles(184, 340);
 
-    drawFlawerCircles(64,356);
-    drawFlawerCircles(304,308);
+    drawFlawerCircles(64, 356);
+    drawFlawerCircles(304, 308);
 
-    drawSectorCircles(224,220);
-    drawSectorCircles(420,284);
+    drawSectorCircles(224, 220);
+    drawSectorCircles(420, 284);
 
-    drawBlackCircles(378,80);
-    drawBlackCircles(260,428);
+    drawBlackCircles(378, 80);
+    drawBlackCircles(260, 428);
 
-    drawRedCircle(380,400);
+    drawRedCircle(380, 400);
+
+    drawingContext.restore();
   pop();
 }
 
