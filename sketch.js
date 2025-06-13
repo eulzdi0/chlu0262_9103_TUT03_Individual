@@ -1,25 +1,25 @@
+//Define the center coordinates of all circles to be drawn
 let circles = [
   [54, 48], [172, 25], [292, 3], [28, 160], [140, 136], [254, 110], [378, 80],
   [-8, 268], [108, 248], [224, 220], [340, 192], [64, 356], [184, 340], [304, 308],
   [420, 284], [260, 428], [380, 400]
 ];
-const RADIUS = 54;              // 基准半径
+const RADIUS = 54;              
 
-// —— 倒计时逻辑 —— 
+// Set up countdown page
 let countdown = 3;
 let lastSecChange = 0;
-const countdownInterval = 1000; // 每 1000ms 减 1
+const countdownInterval = 1000; 
 
-// —— 分段揭示 —— 
+//  Segmented disclosure 
 let sceneStarted = false;
 let currentStep = 0;
 const stepInterval = 500;
 let lastStepTime = 0;
 
-// —— 延时高亮 —— 
 let highlightGreen = false;
 
-// —— 动态配色 —— 
+// Dynamic color matching
 let concentricColors;    // 36 blocks
 let flowerPetalColors;   // 14 petals + core
 let flowerCoreColor;
@@ -27,7 +27,7 @@ let sectorOuterColors;   // 40 sectors
 let sectorInnerColors;   // 30 sectors
 let sectorCoreColor;
 let blackFill1, blackFill2, blackFill3, blackLineColor;
-let redStrokeColors;     // 5 strokes
+let redStrokeColors;     // 5 strokes 
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -36,13 +36,15 @@ function setup() {
   fill(255);
   lastSecChange = millis();
 
-  // 初始配色，并每 3 秒更新一次
+  // Initial color matching, and update every 3 seconds
   regeneratePalettes();
   setInterval(regeneratePalettes, 3000);
 
   noStroke();
 }
-
+//If the countdown is not over, then set the background to black.If the time from the last decrement is more than 1 second, 
+// decrement one second and record the time.If it is decremented to 0, start the scene mark, record the start time of the segment, 
+// and arrange highlightGreen = true after 2 seconds.Draw the current countdown number in the center of the screen.
 function draw() {
   resizeCanvas(windowWidth, windowHeight);
 
@@ -63,7 +65,8 @@ function draw() {
     drawDynamicScene();
   }
 }
-
+//Calculate the size of the base 400×400 grid after scaling to the screen ratio.
+//Move the drawing area to the center of the screen and scale it proportionally.
 function drawDynamicScene() {
   const baseSize = 400;
   const s = min(width / baseSize, height / baseSize);
@@ -83,13 +86,13 @@ function drawDynamicScene() {
     drawingContext.rect(0,0,baseSize,baseSize);
     drawingContext.clip();
 
-    // 白底圆
+    // White circle backgrond
     fill(255);
     for (let [x,y] of circles) {
       ellipse(x,y, RADIUS*2, RADIUS*2);
     }
 
-    // 前 8 步保留旧逻辑
+    //currentStep calls static drawing functions from 1 to 8 in sequence
     if (currentStep>=1) drawSunMoon(254,110);
     if (currentStep>=2) drawSunMoon(54,48);
     if (currentStep>=3) drawEgg(140,136);
@@ -98,8 +101,7 @@ function drawDynamicScene() {
     if (currentStep>=6) drawGreenCircle(292,3);
     if (currentStep>=7) drawBlueCircle(28,160);
     if (currentStep>=8) drawBlueCircle(172,25);
-
-    // 步骤 9–17: 用动态配色的函数
+   //Steps 9-17 call the "dynamic color matching" version of the drawing function in sequence
     if (currentStep>=9)  drawConcentricCircles(340,192);
     if (currentStep>=10) drawConcentricCircles(184,340);
     if (currentStep>=11) drawFlawerCircles(64,356);
@@ -117,7 +119,7 @@ function drawDynamicScene() {
 function windowResized() {
   redraw();
 }
-
+//Local hours during the daytime hours 6–17
 function isDay() {
   const h = hour();
   return h>=6 && h<18;
@@ -148,11 +150,6 @@ function windowResized() {
   redraw();
 }
 
-
-// —— 以下为原有的各种 drawXXX 函数 —— 
-// drawSunMoon, drawEgg, drawGreenCircle, drawBlueCircle, drawConcentricCircles,
-// drawFlawerCircles, drawSectorCircles, drawBlackCircles, drawRedCircle, drawStar, drawHeart
-// （因篇幅所限，此处略。完整实现请参照原 sketch.js 中各函数定义） 
 
 //Drawing on drawSunMoon(252, 108) and drawSunMoon(54,52)
 function drawSunMoon(cx, cy) {
