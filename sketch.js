@@ -3,59 +3,63 @@ let circles = [
   [-8, 268], [108, 248], [224, 220], [340, 192], [64, 356], [184, 340], [304, 308],
   [420, 284], [260, 428], [380, 400]
 ];
-const RADIUS = 54;  // 所有圆的基准半径
+const RADIUS = 54;              // 基准半径
 
 // —— 倒计时逻辑 —— 
-let countdown = 3;               // 倒计时起始值（秒）
-let lastSecChange = 0;           // 上次秒数更新的时间戳
-const countdownInterval = 1000;  // 每隔 1000ms 减 1
+let countdown = 3;
+let lastSecChange = 0;
+const countdownInterval = 1000; // 每 1000ms 减 1
 
-// —— 分段逐步揭示 —— 
-let sceneStarted   = false;
-let currentStep    = 0;
-const stepInterval = 500;        // 每隔 500ms 揭示下一步
-let lastStepTime   = 0;
+// —— 分段揭示 —— 
+let sceneStarted = false;
+let currentStep = 0;
+const stepInterval = 500;
+let lastStepTime = 0;
 
-// —— 延时高亮绿圈 —— 
+// —— 延时高亮 —— 
 let highlightGreen = false;
 
-// —— 主题切换（昼/夜） —— 
-function isDay() {
-  const h = hour();
-  return h >= 6 && h < 18;
-}
+// —— 动态配色 —— 
+let concentricColors;    // 36 blocks
+let flowerPetalColors;   // 14 petals + core
+let flowerCoreColor;
+let sectorOuterColors;   // 40 sectors
+let sectorInnerColors;   // 30 sectors
+let sectorCoreColor;
+let blackFill1, blackFill2, blackFill3, blackLineColor;
+let redStrokeColors;     // 5 strokes
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  // 倒计时样式
   textAlign(CENTER, CENTER);
   textSize(120);
   fill(255);
   lastSecChange = millis();
+
+  // 初始配色，并每 3 秒更新一次
+  regeneratePalettes();
+  setInterval(regeneratePalettes, 3000);
+
+  noStroke();
 }
 
 function draw() {
-  // 保证画布始终占满窗口
   resizeCanvas(windowWidth, windowHeight);
 
   if (countdown > 0) {
-    // 倒计时阶段
     background(0);
     if (millis() - lastSecChange >= countdownInterval) {
       countdown--;
       lastSecChange = millis();
       if (countdown === 0) {
-        // 倒计时结束，进入主场景
         sceneStarted = true;
         lastStepTime = millis();
-        // 2s 后高亮绿色圆环
         setTimeout(() => { highlightGreen = true; }, 2000);
       }
     }
-    text(countdown, width / 2, height / 2);
+    text(countdown, width/2, height/2);
 
   } else {
-    // 主场景持续渲染
     drawDynamicScene();
   }
 }
@@ -63,61 +67,80 @@ function draw() {
 function drawDynamicScene() {
   const baseSize = 400;
   const s = min(width / baseSize, height / baseSize);
-
-  // 日夜背景
   background(isDay() ? 255 : 20);
 
   push();
-    // 居中并缩放到 baseSize
-    translate((width - baseSize * s) / 2, (height - baseSize * s) / 2);
+    translate((width - baseSize*s)/2, (height - baseSize*s)/2);
     scale(s);
 
-    // 分段揭示进度
     if (millis() - lastStepTime >= stepInterval && currentStep < 17) {
       currentStep++;
       lastStepTime = millis();
     }
 
-    // 裁剪到 400×400 区域
     drawingContext.save();
     drawingContext.beginPath();
-    drawingContext.rect(0, 0, baseSize, baseSize);
+    drawingContext.rect(0,0,baseSize,baseSize);
     drawingContext.clip();
 
-    // 背景分割
-    noStroke();
+    // 白底圆
     fill(255);
-    triangle(0, 0, baseSize, 0, 0, baseSize);
-    fill(0);
-    triangle(baseSize, baseSize, baseSize, 0, 0, baseSize);
-
-    // 所有白色底圆
-    fill(255);
-    for (let [x, y] of circles) {
-      ellipse(x, y, RADIUS * 2, RADIUS * 2);
+    for (let [x,y] of circles) {
+      ellipse(x,y, RADIUS*2, RADIUS*2);
     }
 
-    // 依次调用前 currentStep 步
-    if (currentStep >= 1)  drawSunMoon(254, 110);
-    if (currentStep >= 2)  drawSunMoon(54, 48);
-    if (currentStep >= 3)  drawEgg(140, 136);
-    if (currentStep >= 4)  drawEgg(-8, 268);
-    if (currentStep >= 5)  drawGreenCircle(108, 248);
-    if (currentStep >= 6)  drawGreenCircle(292, 3);
-    if (currentStep >= 7)  drawBlueCircle(28, 160);
-    if (currentStep >= 8)  drawBlueCircle(172, 25);
-    if (currentStep >= 9)  drawConcentricCircles(340, 192);
-    if (currentStep >= 10) drawConcentricCircles(184, 340);
-    if (currentStep >= 11) drawFlawerCircles(64, 356);
-    if (currentStep >= 12) drawFlawerCircles(304, 308);
-    if (currentStep >= 13) drawSectorCircles(224, 220);
-    if (currentStep >= 14) drawSectorCircles(420, 284);
-    if (currentStep >= 15) drawBlackCircles(378, 80);
-    if (currentStep >= 16) drawBlackCircles(260, 428);
-    if (currentStep >= 17) drawRedCircle(380, 400);
+    // 前 8 步保留旧逻辑
+    if (currentStep>=1) drawSunMoon(254,110);
+    if (currentStep>=2) drawSunMoon(54,48);
+    if (currentStep>=3) drawEgg(140,136);
+    if (currentStep>=4) drawEgg(-8,268);
+    if (currentStep>=5) drawGreenCircle(108,248);
+    if (currentStep>=6) drawGreenCircle(292,3);
+    if (currentStep>=7) drawBlueCircle(28,160);
+    if (currentStep>=8) drawBlueCircle(172,25);
+
+    // 步骤 9–17: 用动态配色的函数
+    if (currentStep>=9)  drawConcentricCircles(340,192);
+    if (currentStep>=10) drawConcentricCircles(184,340);
+    if (currentStep>=11) drawFlawerCircles(64,356);
+    if (currentStep>=12) drawFlawerCircles(304,308);
+    if (currentStep>=13) drawSectorCircles(224,220);
+    if (currentStep>=14) drawSectorCircles(420,284);
+    if (currentStep>=15) drawBlackCircles(378,80);
+    if (currentStep>=16) drawBlackCircles(260,428);
+    if (currentStep>=17) drawRedCircle(380,400);
 
     drawingContext.restore();
   pop();
+}
+
+function windowResized() {
+  redraw();
+}
+
+function isDay() {
+  const h = hour();
+  return h>=6 && h<18;
+}
+
+// —— 配色更新 —— 
+function regeneratePalettes() {
+  // Concentric: 36 随机色块
+  concentricColors = Array.from({length:36}, () => color(random(255),random(255),random(255)));
+  // Flower: 14 花瓣 + 核心
+  flowerPetalColors = Array.from({length:14}, () => color(random(255),random(255),random(255)));
+  flowerCoreColor   = color(random(255),random(255),random(255));
+  // Sector: 外圈 40 扇区，内圈 30 扇区，核心
+  sectorOuterColors = Array.from({length:40}, () => color(random(255),random(255),random(255)));
+  sectorInnerColors = Array.from({length:30}, () => color(random(255),random(255),random(255)));
+  sectorCoreColor   = color(random(255),random(255),random(255));
+  // Black: 三层填充 + 线条
+  blackFill1    = color(random(255),random(255),random(255));
+  blackFill2    = color(random(255),random(255),random(255));
+  blackFill3    = color(random(255),random(255),random(255));
+  blackLineColor= color(random(255),random(255),random(255));
+  // RedCircle: 5 条描边
+  redStrokeColors = Array.from({length:5}, () => color(random(255),random(255),random(255)));
 }
 
 function windowResized() {
@@ -402,187 +425,103 @@ function drawBlueCircle(cx, cy) {
  */
 
 function drawConcentricCircles(cx, cy) {
-  const numBlocks = 36;
-  const fixedWeights = Array(numBlocks).fill(1);
-  const totalW = fixedWeights.reduce((sum, w) => sum + w, 0);
-  const angles = fixedWeights.map(w => (w / totalW) * TWO_PI);
-
-  colorMode(RGB, 255);
+  // 36 色块
   noStroke();
-  let currentAngle = 0;
-  // Outermost 随机色扇形
-  for (let i = 0; i < numBlocks; i++) {
-    fill(random(255), random(255), random(255));
-    arc(
-      cx, cy,
-      RADIUS * 2,
-      RADIUS * 2,
-      currentAngle,
-      currentAngle + angles[i],
-      PIE
-    );
-    currentAngle += angles[i];
+  let angle = 0;
+  const slice = TWO_PI / 36;
+  for (let i=0; i<36; i++) {
+    fill(concentricColors[i]);
+    arc(cx, cy, RADIUS*2, RADIUS*2, angle, angle+slice, PIE);
+    angle += slice;
   }
-
-  // 中间五个同心圆，随机填充
-  const middleDiameters = [80, 65, 50, 35, 20];
-  for (let d of middleDiameters) {
-    fill(random(255), random(255), random(255));
-    ellipse(cx, cy, d, d);
-  }
-
-  // 最外层蓝色边框 → 随机色边框
-  noFill();
-  stroke(random(255), random(255), random(255));
-  strokeWeight(2);
-  ellipse(cx, cy, (RADIUS * 2) + 2, (RADIUS * 2) + 2);
+  // 中五圈
+  noStroke();
+  fill(color(150,30,30));
+  ellipse(cx,cy,80,80);
+  fill(color(200,100,0));
+  ellipse(cx,cy,65,65);
+  fill(color(80,0,80));
+  ellipse(cx,cy,50,50);
+  fill(color(0,60,30));
+  ellipse(cx,cy,35,35);
+  fill(color(25,25,112));
+  ellipse(cx,cy,20,20);
 }
 
 function drawFlawerCircles(cx, cy) {
+  // 20 扇区底色
   const numSlices = 20;
-  const angleStep = TWO_PI / numSlices;
-
-  colorMode(RGB, 255);
+  const slice = TWO_PI / numSlices;
   noStroke();
-  // 外层 20 扇形，随机填色
-  for (let i = 0; i < numSlices; i++) {
-    fill(random(255), random(255), random(255));
-    arc(
-      cx, cy,
-      RADIUS * 2,
-      RADIUS * 2,
-      i * angleStep,
-      (i + 1) * angleStep,
-      PIE
-    );
+  for (let i=0; i<numSlices; i++) {
+    fill(color(200,200,200)); // 固定底色
+    arc(cx,cy, RADIUS*2, RADIUS*2, i*slice, (i+1)*slice, PIE);
   }
-
-  // 14 片花瓣，随机填色
-  const numPetals = 14;
-  const petalAngle = TWO_PI / numPetals;
-  const petalLength = RADIUS * 1.2;
-  const petalWidth  = 12;
-  const petalOffset = petalLength / 2;
-
-  for (let i = 0; i < numPetals; i++) {
-    const theta = i * petalAngle - PI / 2;
-    push();
-      translate(cx, cy);
-      rotate(theta);
-      fill(random(255), random(255), random(255));
-      ellipse(petalOffset, 0, petalLength, petalWidth);
+  // 14 花瓣
+  const petalAngle = TWO_PI / 14;
+  const petalOffset = RADIUS * 0.9;
+  const petalLen = RADIUS * 1.2;
+  const petalWidth = 12;
+  for (let i=0; i<14; i++) {
+    let theta = i*petalAngle - PI/2;
+    push(); translate(cx,cy); rotate(theta);
+    fill(flowerPetalColors[i]);
+    ellipse(petalOffset, 0, petalLen, petalWidth);
     pop();
   }
-
-  // 花心
-  fill(random(255), random(255), random(255));
-  noStroke();
-  const coreRadius = RADIUS * 0.3;
-  ellipse(cx, cy, coreRadius * 2, coreRadius * 2);
+  // 花芯
+  fill(flowerCoreColor);
+  ellipse(cx,cy, 20,20);
 }
 
 function drawSectorCircles(cx, cy) {
-  colorMode(RGB, 255);
+  // 外圈 40
   noStroke();
-
-  // 外层 40 扇形
-  const numOuter = 40;
-  const outerAngleStep = TWO_PI / numOuter;
-  for (let i = 0; i < numOuter; i++) {
-    fill(random(255), random(255), random(255));
-    arc(
-      cx, cy,
-      RADIUS * 2,
-      RADIUS * 2,
-      i * outerAngleStep,
-      (i + 1) * outerAngleStep,
-      PIE
-    );
+  for (let i=0; i<40; i++) {
+    fill(sectorOuterColors[i]);
+    arc(cx,cy, RADIUS*2, RADIUS*2, i*TWO_PI/40, (i+1)*TWO_PI/40, PIE);
   }
-
-  // 实心环
-  fill(random(255), random(255), random(255));
-  ellipse(cx, cy, RADIUS * 2 - 20, RADIUS * 2 - 20);
-
-  // 内层 30 扇形
-  const numInner = 30;
-  const innerAngleStep = TWO_PI / numInner;
-  const innerDiameter = RADIUS * 2 - 30;
-  for (let i = 0; i < numInner; i++) {
-    fill(random(255), random(255), random(255));
-    arc(
-      cx, cy,
-      innerDiameter,
-      innerDiameter,
-      i * innerAngleStep,
-      (i + 1) * innerAngleStep,
-      PIE
-    );
+  // 黑实心环
+  fill(0);
+  ellipse(cx,cy, RADIUS*2-20, RADIUS*2-20);
+  // 内圈 30
+  for (let i=0; i<30; i++) {
+    fill(sectorInnerColors[i]);
+    arc(cx,cy, RADIUS*2-30, RADIUS*2-30, i*TWO_PI/30, (i+1)*TWO_PI/30, PIE);
   }
-
-  // 中心小圆
-  fill(random(255), random(255), random(255));
-  ellipse(cx, cy, 20, 20);
+  // 核心
+  fill(sectorCoreColor);
+  ellipse(cx,cy,20,20);
 }
 
 function drawBlackCircles(cx, cy) {
-  colorMode(RGB, 255);
   noStroke();
-  // 三个同心实心圆，随机填色
-  const radii = [110, 100, 90];
-  for (let r of radii) {
-    fill(random(255), random(255), random(255));
-    ellipse(cx, cy, r, r);
-  }
-
-  // 放射线
-  const numLines = 100;
-  stroke(random(255), random(255), random(255));
+  fill(blackFill1);
+  ellipse(cx,cy, RADIUS*2, RADIUS*2);
+  fill(blackFill2);
+  ellipse(cx,cy, RADIUS*1.4, RADIUS*1.4);
+  fill(blackFill3);
+  ellipse(cx,cy, RADIUS*0.8, RADIUS*0.8);
+  stroke(blackLineColor);
   strokeWeight(2);
-  for (let i = 0; i < numLines; i++) {
-    const theta = i * TWO_PI / numLines;
-    const rOuter = 45;
-    const rInner = 30;
-    const x1 = cx + cos(theta) * rInner;
-    const y1 = cy + sin(theta) * rInner;
-    const x2 = cx + cos(theta) * rOuter;
-    const y2 = cy + sin(theta) * rOuter;
-    line(x1, y1, x2, y2);
+  for (let i=0; i<100; i++) {
+    let theta = i*TWO_PI/100;
+    let x1 = cx + cos(theta)*30, y1 = cy + sin(theta)*30;
+    let x2 = cx + cos(theta)*45, y2 = cy + sin(theta)*45;
+    line(x1,y1,x2,y2);
   }
   noStroke();
-
-  // 三段扇形
-  const threeAngle = TWO_PI / 3;
-  const threeDiameter = 60;
-  for (let i = 0; i < 3; i++) {
-    fill(random(255), random(255), random(255));
-    arc(
-      cx, cy,
-      threeDiameter,
-      threeDiameter,
-      i * threeAngle,
-      (i + 1) * threeAngle,
-      PIE
-    );
-  }
-
-  // 中心双层圆
-  fill(random(255), random(255), random(255));
-  ellipse(cx, cy, 30, 30);
-  fill(random(255), random(255), random(255));
-  ellipse(cx, cy, 20, 20);
 }
 
 function drawRedCircle(cx, cy) {
-  colorMode(RGB, 255);
   noFill();
-  // 五层描边，每层随机描边色
-  const weights = [12, 10, 8, 6, 4];
-  for (let i = 0; i < weights.length; i++) {
-    stroke(random(255), random(255), random(255));
+  // 5 条描边
+  const weights = [12,10,8,6,4];
+  const diameters = [100,80,60,40,20];
+  for (let i=0; i<5; i++) {
+    stroke(redStrokeColors[i]);
     strokeWeight(weights[i]);
-    const diameter = 100 - i * 20;
-    ellipse(cx, cy, diameter, diameter);
+    ellipse(cx,cy, diameters[i], diameters[i]);
   }
   noStroke();
 }
