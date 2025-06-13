@@ -125,28 +125,26 @@ function isDay() {
   return h>=6 && h<18;
 }
 
-// —— 配色更新 —— 
 function regeneratePalettes() {
-  // Concentric: 36 随机色块
+  // Concentric: 36 random color blocks
   concentricColors = Array.from({length:36}, () => color(random(255),random(255),random(255)));
-  // Flower: 14 花瓣 + 核心
+  // Flower: 14 petals + core
   flowerPetalColors = Array.from({length:14}, () => color(random(255),random(255),random(255)));
   flowerCoreColor   = color(random(255),random(255),random(255));
-  // Sector: 外圈 40 扇区，内圈 30 扇区，核心
+  // Sector: Outer ring 40 sectors, inner ring 30 sectors, core
   sectorOuterColors = Array.from({length:40}, () => color(random(255),random(255),random(255)));
   sectorInnerColors = Array.from({length:30}, () => color(random(255),random(255),random(255)));
   sectorCoreColor   = color(random(255),random(255),random(255));
-  // Black: 三层填充 + 线条
+  // Black: Three-layer fill + line
   blackFill1    = color(random(255),random(255),random(255));
   blackFill2    = color(random(255),random(255),random(255));
   blackFill3    = color(random(255),random(255),random(255));
   blackLineColor= color(random(255),random(255),random(255));
-  // RedCircle: 5 条描边
+  // RedCircle: 5 strokes
   redStrokeColors = Array.from({length:5}, () => color(random(255),random(255),random(255)));
 }
 
 function windowResized() {
-  // draw() 已处理 resizeCanvas
   redraw();
 }
 
@@ -157,34 +155,34 @@ function drawSunMoon(cx, cy) {
   const DarkOrange = color(236, 120, 46);
   const white = color(255);
 
-  // 外圈
+  //Outer ring
   strokeWeight(5);
   stroke(orange);
   noFill();
   ellipse(cx, cy, RADIUS * 2, RADIUS * 2);
 
-  // 半圆填充
+  // Semicircle filling
   noStroke(); fill(orange);
   arc(cx, cy, RADIUS * 2, RADIUS * 2, PI / 2, 3 * PI / 2);
 
-  // 中心小白圆
+  //Small white circle in the center
   fill(white);
   ellipse(cx, cy, 40, 40);
 
-  // 中心小半圆
+  // Small white circle in the center
   fill(DarkOrange);
   arc(cx, cy, 40, 40, -PI / 2, PI / 2);
 
-  // 呼吸星星（半径随时间微调）
+  //Breathing stars (radius fine-tuned over time)
   const pulse = 1 + 0.1 * sin((millis() - lastSecChange) * 0.005);
   drawStar(cx + 7, cy, 6 * pulse, 4 * pulse);
 
-  // 放射线
+  //radiation
   const totalPerSide = 10;
   const step = PI / totalPerSide;
 
   strokeWeight(3);
-  // 右侧
+
   stroke(DarkOrange);
   for (let i = 0; i < totalPerSide; i++) {
     const angle = -PI / 2 + i * step;
@@ -192,7 +190,7 @@ function drawSunMoon(cx, cy) {
     line(cx + cos(angle) * r1, cy + sin(angle) * r1,
          cx + cos(angle) * r2, cy + sin(angle) * r2);
   }
-  // 左侧
+
   stroke(white);
   for (let i = 0; i < totalPerSide; i++) {
     const angle = PI / 2 + i * step;
@@ -422,7 +420,7 @@ function drawBlueCircle(cx, cy) {
  */
 
 function drawConcentricCircles(cx, cy) {
-  // 36 色块
+  // 36 color blocks
   noStroke();
   let angle = 0;
   const slice = TWO_PI / 36;
@@ -431,7 +429,7 @@ function drawConcentricCircles(cx, cy) {
     arc(cx, cy, RADIUS*2, RADIUS*2, angle, angle+slice, PIE);
     angle += slice;
   }
-  // 中五圈
+  // Five circles line
   noStroke();
   fill(color(150,30,30));
   ellipse(cx,cy,80,80);
@@ -446,15 +444,15 @@ function drawConcentricCircles(cx, cy) {
 }
 
 function drawFlawerCircles(cx, cy) {
-  // 20 扇区底色
+  // 20 Sector background color
   const numSlices = 20;
   const slice = TWO_PI / numSlices;
   noStroke();
   for (let i=0; i<numSlices; i++) {
-    fill(color(200,200,200)); // 固定底色
+    fill(color(200,200,200)); 
     arc(cx,cy, RADIUS*2, RADIUS*2, i*slice, (i+1)*slice, PIE);
   }
-  // 14 花瓣
+  // 14 Petals
   const petalAngle = TWO_PI / 14;
   const petalOffset = RADIUS * 0.9;
   const petalLen = RADIUS * 1.2;
@@ -466,27 +464,27 @@ function drawFlawerCircles(cx, cy) {
     ellipse(petalOffset, 0, petalLen, petalWidth);
     pop();
   }
-  // 花芯
+  
   fill(flowerCoreColor);
   ellipse(cx,cy, 20,20);
 }
 
 function drawSectorCircles(cx, cy) {
-  // 外圈 40
+  // Outer ring 40 blocks
   noStroke();
   for (let i=0; i<40; i++) {
     fill(sectorOuterColors[i]);
     arc(cx,cy, RADIUS*2, RADIUS*2, i*TWO_PI/40, (i+1)*TWO_PI/40, PIE);
   }
-  // 黑实心环
+  // Black solid ring
   fill(0);
   ellipse(cx,cy, RADIUS*2-20, RADIUS*2-20);
-  // 内圈 30
+  // Inner circle 30 blocks
   for (let i=0; i<30; i++) {
     fill(sectorInnerColors[i]);
     arc(cx,cy, RADIUS*2-30, RADIUS*2-30, i*TWO_PI/30, (i+1)*TWO_PI/30, PIE);
   }
-  // 核心
+
   fill(sectorCoreColor);
   ellipse(cx,cy,20,20);
 }
@@ -512,7 +510,6 @@ function drawBlackCircles(cx, cy) {
 
 function drawRedCircle(cx, cy) {
   noFill();
-  // 5 条描边
   const weights = [12,10,8,6,4];
   const diameters = [100,80,60,40,20];
   for (let i=0; i<5; i++) {
