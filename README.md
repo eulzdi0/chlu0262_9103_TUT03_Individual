@@ -23,3 +23,116 @@ const stepInterval = 500;
 let lastStepTime = 0;
 
 let highlightGreen = false;
+
+```
+drawConcentricCircles uses 36 equally divided sectors to create the outermost colored ring, and then superimposes five solid circles of different diameters in the center to form concentric circles with color gradients from the outside to the inside;
+
+drawFlawerCircles first uses 20 gray sectors as the base, then evenly arranges 14 colored petals on it, and finally draws a small colored circle in the center, like a blooming flower;
+
+drawSectorCircles is divided into three layers: 40 colored sectors in the outermost circle, a pure black solid ring inside, and then 30 smaller colored sectors, and a small colored circle in the center, like a gear with a clear rhythm;
+
+drawBlackCircles superimposes three layers of solid circles of different brightness, plus a circle of "black lines" composed of 100 radial straight lines, creating a texture like metal engraving;
+
+drawRedCircle is composed of only five concentric circles of different thicknesses and random red strokes, which is simple and impactful.
+Each time it is called, these color arrays (such as concentricColors, flowerPetalColors, etc.) are dynamically generated, so the colors of the concentric rings, petals, fans, or strokes are constantly refreshed, ensuring that the picture is fresh every time it appears.
+```javascript
+function drawConcentricCircles(cx, cy) {
+  // 36 color blocks
+  noStroke();
+  let angle = 0;
+  const slice = TWO_PI / 36;
+  for (let i=0; i<36; i++) {
+    fill(concentricColors[i]);
+    arc(cx, cy, RADIUS*2, RADIUS*2, angle, angle+slice, PIE);
+    angle += slice;
+  }
+  // Five circles line
+  noStroke();
+  fill(color(150,30,30));
+  ellipse(cx,cy,80,80);
+  fill(color(200,100,0));
+  ellipse(cx,cy,65,65);
+  fill(color(80,0,80));
+  ellipse(cx,cy,50,50);
+  fill(color(0,60,30));
+  ellipse(cx,cy,35,35);
+  fill(color(25,25,112));
+  ellipse(cx,cy,20,20);
+}
+
+function drawFlawerCircles(cx, cy) {
+  // 20 Sector background color
+  const numSlices = 20;
+  const slice = TWO_PI / numSlices;
+  noStroke();
+  for (let i=0; i<numSlices; i++) {
+    fill(color(200,200,200)); 
+    arc(cx,cy, RADIUS*2, RADIUS*2, i*slice, (i+1)*slice, PIE);
+  }
+  // 14 Petals
+  const petalAngle = TWO_PI / 14;
+  const petalOffset = RADIUS * 0.9;
+  const petalLen = RADIUS * 1.2;
+  const petalWidth = 12;
+  for (let i=0; i<14; i++) {
+    let theta = i*petalAngle - PI/2;
+    push(); translate(cx,cy); rotate(theta);
+    fill(flowerPetalColors[i]);
+    ellipse(petalOffset, 0, petalLen, petalWidth);
+    pop();
+  }
+  
+  fill(flowerCoreColor);
+  ellipse(cx,cy, 20,20);
+}
+
+function drawSectorCircles(cx, cy) {
+  // Outer ring 40 blocks
+  noStroke();
+  for (let i=0; i<40; i++) {
+    fill(sectorOuterColors[i]);
+    arc(cx,cy, RADIUS*2, RADIUS*2, i*TWO_PI/40, (i+1)*TWO_PI/40, PIE);
+  }
+  // Black solid ring
+  fill(0);
+  ellipse(cx,cy, RADIUS*2-20, RADIUS*2-20);
+  // Inner circle 30 blocks
+  for (let i=0; i<30; i++) {
+    fill(sectorInnerColors[i]);
+    arc(cx,cy, RADIUS*2-30, RADIUS*2-30, i*TWO_PI/30, (i+1)*TWO_PI/30, PIE);
+  }
+
+  fill(sectorCoreColor);
+  ellipse(cx,cy,20,20);
+}
+
+function drawBlackCircles(cx, cy) {
+  noStroke();
+  fill(blackFill1);
+  ellipse(cx,cy, RADIUS*2, RADIUS*2);
+  fill(blackFill2);
+  ellipse(cx,cy, RADIUS*1.4, RADIUS*1.4);
+  fill(blackFill3);
+  ellipse(cx,cy, RADIUS*0.8, RADIUS*0.8);
+  stroke(blackLineColor);
+  strokeWeight(2);
+  for (let i=0; i<100; i++) {
+    let theta = i*TWO_PI/100;
+    let x1 = cx + cos(theta)*30, y1 = cy + sin(theta)*30;
+    let x2 = cx + cos(theta)*45, y2 = cy + sin(theta)*45;
+    line(x1,y1,x2,y2);
+  }
+  noStroke();
+}
+
+function drawRedCircle(cx, cy) {
+  noFill();
+  const weights = [12,10,8,6,4];
+  const diameters = [100,80,60,40,20];
+  for (let i=0; i<5; i++) {
+    stroke(redStrokeColors[i]);
+    strokeWeight(weights[i]);
+    ellipse(cx,cy, diameters[i], diameters[i]);
+  }
+  noStroke();
+}
