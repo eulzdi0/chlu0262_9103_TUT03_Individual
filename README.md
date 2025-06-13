@@ -1,7 +1,7 @@
 # Final9103
 ## Inspiration: 
 Damien Hirst's dot paintings inspired me that circles have infinite creative possibilities, and then combined with the kaleidoscope inspiration I saw, based on the circle, I changed the color to achieve the colorful effect of the kaleidoscope.
-![An image ](image1.pnge.)
+![An image ](D:\gamme\9103\9103\chlu0262_9103_TUT03_Individual-Work\image1.png)
 
 ## The Instruction of Individual Work:
 In my personal works, there will be a countdown first, and then you will see the picture as the countdown ends. The circle on the right will change color every 3 seconds, and the color of the background will also change according to the local time. If it is daytime, it will be white.
